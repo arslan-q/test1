@@ -35,3 +35,6 @@ resource "aws_instance" "worker" {
   ami           = "ami-0123456789abcdef0"
   instance_type = "m5.xlarge"
 }
+
+
+# check 1
