@@ -1,37 +1,24 @@
-resource "aws_iam_policy" "deploy" {
-  name = "deploy-everything"
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = "*"
-      Resource = "*"
-}]
-})
+resource "aws_security_group" "db" {
+  name = "db-sg"
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
-# База данных: публичная, без шифрования, без бэкапов
-resource "aws_db_instance" "main" {
-  identifier              = "main-db"
-  engine                  = "postgres"
-  instance_class          = "db.t3.medium"
-  allocated_storage       = 50
-  username                = "app"
-  password                = "SuperSecret123!"
-  publicly_accessible     = true
-  storage_encrypted       = false
-  backup_retention_period = 0
-  skip_final_snapshot     = true
+# Таблица без point-in-time recovery
+resource "aws_dynamodb_table" "orders" {
+  name         = "orders"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
+  attribute {
+    name = "id"
+    type = "S"
+  }
 }
-# NAT Gateway — дорогой ресурс
-resource "aws_eip" "nat" {
-  domain = "vpc"
-}
-resource "aws_nat_gateway" "main" {
-  allocation_id = aws_eip.nat.id (http://eip.nat.id/)
-  subnet_id     = "subnet-0123456789abcdef0"
-}
-# Большой сервер
-resource "aws_instance" "worker" {
+# Небольшой сервер
+resource "aws_instance" "app" {
   ami           = "ami-0123456789abcdef0"
-  instance_type = "m5.xlarge"
+  instance_type = "t3.micro"
 }
